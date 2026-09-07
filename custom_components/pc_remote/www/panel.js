@@ -103,8 +103,19 @@ class PcRemotePanel extends HTMLElement {
   }
 
   _isWindows() {
-    const platform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent || "";
-    return /windows/i.test(platform);
+    // ``navigator.userAgentData`` is unavailable on an HTTP Home Assistant
+    // instance in some browsers.  Those browsers commonly report ``Win32``
+    // through navigator.platform, rather than the word "Windows".  Check all
+    // available browser hints instead of letting the first incomplete hint
+    // make a real Windows PC look unsupported.
+    const platform = [
+      navigator.userAgentData?.platform,
+      navigator.platform,
+      navigator.userAgent,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return /\b(?:windows|win32|win64)\b/i.test(platform);
   }
 
   async _api(method, path, body) {

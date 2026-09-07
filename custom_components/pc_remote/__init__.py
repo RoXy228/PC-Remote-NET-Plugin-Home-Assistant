@@ -51,7 +51,9 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         hass,
         frontend_url_path="pc-remote",
         webcomponent_name="pc-remote-panel",
-        module_url="/pc_remote/panel.js",
+        # Change the query version whenever the frontend module changes.  Home
+        # Assistant keeps ES modules cached in an already-open browser tab.
+        module_url="/pc_remote/panel.js?v=1.1.1",
         sidebar_title="PC Remote",
         sidebar_icon="mdi:desktop-classic",
         require_admin=True,
