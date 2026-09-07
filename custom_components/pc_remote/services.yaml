@@ -1,0 +1,38 @@
+execute:
+  name: Выполнить команду
+  description: Отправить существующую команду PC Remote выбранному компьютеру.
+  fields:
+    pc_id:
+      name: Компьютер
+      description: Идентификатор профиля; если не указан, используется основной компьютер.
+      required: false
+      selector:
+        text:
+    command:
+      name: Команда
+      description: STATUS, SHUTDOWN, REBOOT, CANCEL, LOCK, SCREEN_OFF или таймер SHUTDOWN/REBOOT.
+      required: true
+      selector:
+        text:
+
+wake:
+  name: Включить компьютер
+  description: Отправить Wake-on-LAN через встроенную интеграцию Home Assistant.
+  fields:
+    pc_id:
+      name: Компьютер
+      description: Идентификатор профиля; если не указан, используется основной компьютер.
+      required: false
+      selector:
+        text:
+
+cancel_timer:
+  name: Отменить таймер
+  description: Отменить отложенное выключение или перезагрузку компьютера.
+  fields:
+    pc_id:
+      name: Компьютер
+      description: Идентификатор профиля; если не указан, используется основной компьютер.
+      required: false
+      selector:
+        text:

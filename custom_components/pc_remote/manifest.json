@@ -1,0 +1,11 @@
+{
+  "domain": "pc_remote",
+  "name": "PC Remote",
+  "version": "1.1.0",
+  "documentation": "https://github.com/RoXy228/PC-Remote-NET-Plugin-Home-Assistant",
+  "issue_tracker": "https://github.com/RoXy228/PC-Remote-NET-Plugin-Home-Assistant/issues",
+  "codeowners": ["@RoXy228"],
+  "config_flow": true,
+  "dependencies": ["wake_on_lan"],
+  "iot_class": "local_push"
+}

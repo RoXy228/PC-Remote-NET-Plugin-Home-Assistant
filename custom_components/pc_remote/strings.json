@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "PC Remote",
+        "description": "Профили компьютеров добавляются через панель PC Remote."
+      }
+    },
+    "abort": {
+      "already_configured": "Интеграция PC Remote уже добавлена. Используйте панель PC Remote для привязки компьютеров."
+    }
+  }
+}
