@@ -58,7 +58,7 @@ class PcRemotePanel extends HTMLElement {
       '.muted{color:var(--secondary-text-color)}.intro{max-width:820px;margin-bottom:20px;line-height:1.55}' +
       '.toolbar,.button-row,.timer-row,.profile-header,.fields-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.toolbar{margin-bottom:16px}.toolbar .spacer{flex:1 1 8px}' +
       'button{min-height:38px;border:0;border-radius:8px;padding:0 14px;color:var(--primary-text-color);background:var(--secondary-background-color);font:inherit;cursor:pointer}button:hover:not(:disabled){background:var(--divider-color)}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}button.primary{color:var(--text-primary-color,#fff);background:var(--primary-color)}button.danger{color:var(--text-primary-color,#fff);background:var(--error-color)}button.warning{color:var(--text-primary-color,#fff);background:var(--warning-color,#f4a000)}' +
-      '.notice{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;padding:12px 14px;border-radius:8px;border-left:4px solid var(--primary-color);background:var(--secondary-background-color);line-height:1.45}.notice[data-level="success"]{border-left-color:var(--success-color,#43a047)}.notice[data-level="error"]{border-left-color:var(--error-color)}.notice[data-level="warning"]{border-left-color:var(--warning-color,#f4a000)}.notice[hidden],.yaml-panel[hidden]{display:none}' +
+      '.notice{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;padding:12px 14px;border-radius:8px;border-left:4px solid var(--primary-color);background:var(--secondary-background-color);line-height:1.45}.notice[data-level="success"]{border-left-color:var(--success-color,#43a047)}.notice[data-level="error"]{border-left-color:var(--error-color)}.notice[data-level="warning"]{border-left-color:var(--warning-color,#f4a000)}.notice .pairing-link{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:7px;color:var(--text-primary-color,#fff);background:var(--primary-color);font-weight:500;text-decoration:none;white-space:nowrap}.notice .pairing-link:hover{filter:brightness(1.1)}.notice[hidden],.yaml-panel[hidden]{display:none}' +
       '.windows-note{margin-bottom:16px;padding:12px 14px;border-radius:8px;background:var(--secondary-background-color);line-height:1.45}.profiles{display:grid;gap:16px}.profile-card,.empty-state,.yaml-panel{border-radius:12px;background:var(--card-background-color,var(--primary-background-color));box-shadow:var(--ha-card-box-shadow,0 2px 4px rgba(0,0,0,.18))}.profile-card{overflow:hidden}.profile-content{padding:18px}.profile-header{justify-content:space-between;gap:16px;margin-bottom:14px}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{border-radius:999px;padding:4px 9px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;white-space:nowrap}.badge.primary{color:var(--text-primary-color,#fff);background:var(--primary-color)}.badge.ok{color:var(--text-primary-color,#fff);background:var(--success-color,#43a047)}.badge.error{color:var(--text-primary-color,#fff);background:var(--error-color)}.profile-status{margin:0 0 14px;color:var(--secondary-text-color);font-size:14px;line-height:1.5}' +
       'details{margin:16px 0;border-top:1px solid var(--divider-color);border-bottom:1px solid var(--divider-color)}summary{padding:14px 0;cursor:pointer;font-weight:500}.fields-grid{align-items:stretch;padding:0 0 16px}label.field{display:grid;flex:1 1 220px;gap:6px;color:var(--secondary-text-color);font-size:13px}label.field.checkbox-field{display:flex;align-items:center;gap:9px;padding-top:23px}input,select{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:6px;color:var(--primary-text-color);background:var(--primary-background-color);font:inherit}input[type="checkbox"]{width:auto;min-height:auto;accent-color:var(--primary-color)}input[readonly]{opacity:.75}.command-section{display:grid;gap:12px;margin-top:14px}.command-section+.command-section{padding-top:14px;border-top:1px solid var(--divider-color)}.timer-row select{width:auto;min-width:106px}.empty-state{padding:30px;text-align:center}.empty-state h2{margin-bottom:10px}.yaml-panel{margin-top:16px;padding:18px}.yaml-panel pre{overflow:auto;max-height:320px;margin:12px 0;padding:12px;border-radius:8px;background:var(--code-editor-background-color,var(--secondary-background-color));color:var(--primary-text-color);white-space:pre-wrap}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%)}' +
       '@media(max-width:600px){main{padding:16px}.toolbar .spacer{display:none}.toolbar>button{flex:1 1 160px}.profile-header{align-items:flex-start;flex-direction:column}button{flex:1 1 auto}}' +
@@ -243,6 +243,22 @@ class PcRemotePanel extends HTMLElement {
     notice.hidden = true;
     notice.textContent = "";
     delete notice.dataset.level;
+  }
+
+  _showPairingNotice(message, pairingUri) {
+    const notice = this._root.querySelector("#notice");
+    notice.replaceChildren();
+
+    const text = document.createElement("span");
+    text.textContent = message + " Если PC Remote.NET не открылся автоматически, нажмите кнопку справа.";
+    const link = document.createElement("a");
+    link.className = "pairing-link";
+    link.href = pairingUri;
+    link.textContent = "Открыть PC Remote";
+    link.setAttribute("aria-label", "Открыть PC Remote.NET для подтверждения привязки");
+    notice.append(text, link);
+    notice.dataset.level = "info";
+    notice.hidden = false;
   }
 
   async _loadProfiles(announce) {
@@ -657,11 +673,11 @@ class PcRemotePanel extends HTMLElement {
     this._pairingTargetId = targetId;
     this._pairingTargetMarker = targetProfile ? this._profilePairingMarker(targetProfile) : undefined;
     this._pairingExpiresAt = Date.now() + Number(response.expires_in || 120) * 1000;
-    this._setNotice(
+    this._showPairingNotice(
       targetId
         ? "Подтвердите повторную привязку в PC Remote.NET. Этот профиль будет обновлён, новый компьютер создан не будет."
         : "Подтвердите открытие PC Remote.NET, затем подтвердите разрешение в его окне. Эта страница сама обновит список после успешной привязки.",
-      "info"
+      response.pairing_uri
     );
     this._beginPairingPoll();
     window.location.assign(response.pairing_uri);
