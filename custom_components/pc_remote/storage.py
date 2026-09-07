@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+from typing import Any
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
 
-from .const import SIGNAL_PROFILES_CHANGED, STORAGE_KEY, STORAGE_VERSION
+from .const import (
+    SIGNAL_PROFILES_CHANGED,
+    STORAGE_KEY,
+    STORAGE_VERSION,
+    VOICE_SETTINGS_KEY,
+)
 from .models import Profile
 
 
@@ -24,6 +32,9 @@ class ProfileStore:
         )
         self.profiles: dict[str, Profile] = {}
         self.default_id: str | None = None
+        # This contains only voice aliases/phrases and the selected editor
+        # mode. Pairing credentials remain exclusively in Profile objects.
+        self.voice_settings: dict[str, Any] = {}
 
     async def async_load(self) -> None:
         data = await self._store.async_load() or {}
@@ -45,6 +56,8 @@ class ProfileStore:
             else next(iter(self.profiles), None)
         )
         self._sync_default_flags()
+        raw_voice_settings = data.get(VOICE_SETTINGS_KEY, {}) if isinstance(data, dict) else {}
+        self.voice_settings = deepcopy(raw_voice_settings) if isinstance(raw_voice_settings, dict) else {}
 
     def _sync_default_flags(self) -> None:
         for profile in self.profiles.values():
@@ -55,8 +68,18 @@ class ProfileStore:
             {
                 "profiles": [profile.as_dict(True) for profile in self.profiles.values()],
                 "default_profile_id": self.default_id,
+                VOICE_SETTINGS_KEY: self.voice_settings,
             }
         )
+
+    def get_voice_settings(self) -> dict[str, Any]:
+        """Return an isolated copy of non-secret voice settings."""
+        return deepcopy(self.voice_settings)
+
+    async def set_voice_settings(self, settings: dict[str, Any]) -> None:
+        """Persist validated voice settings together with the profiles."""
+        self.voice_settings = deepcopy(settings)
+        await self.async_save()
 
     async def upsert(self, profile: Profile) -> None:
         if not profile.id:

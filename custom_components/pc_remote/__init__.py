@@ -16,6 +16,7 @@ from .const import DOMAIN, PLATFORMS
 from .http import async_setup_http
 from .manager import Manager
 from .storage import ProfileStore
+from .voice import VoiceController
 
 
 SERVICE_EXECUTE_SCHEMA = vol.Schema(
@@ -27,6 +28,24 @@ SERVICE_EXECUTE_SCHEMA = vol.Schema(
 SERVICE_PROFILE_SCHEMA = vol.Schema(
     {vol.Optional("pc_id"): vol.All(str, vol.Length(min=1, max=128))}
 )
+SERVICE_VOICE_SOURCE_SCHEMA = {
+    vol.Optional("pc_id"): vol.All(str, vol.Length(min=1, max=128)),
+    vol.Optional("source_entity_id"): vol.All(str, vol.Length(max=255)),
+    vol.Optional("source_account"): vol.All(str, vol.Length(max=255)),
+}
+SERVICE_VOICE_COMMAND_SCHEMA = vol.Schema(
+    {
+        **SERVICE_VOICE_SOURCE_SCHEMA,
+        vol.Required("command"): vol.All(str, vol.Length(min=1, max=32)),
+    }
+)
+SERVICE_VOICE_CONFIRM_SCHEMA = vol.Schema(
+    {
+        **SERVICE_VOICE_SOURCE_SCHEMA,
+        vol.Optional("command"): vol.All(str, vol.Length(min=1, max=32)),
+    }
+)
+SERVICE_VOICE_CANCEL_SCHEMA = vol.Schema(SERVICE_VOICE_SOURCE_SCHEMA)
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
@@ -34,7 +53,13 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     store = ProfileStore(hass)
     await store.async_load()
     manager = Manager(hass, store)
-    hass.data[DOMAIN] = {"store": store, "manager": manager, "challenges": {}}
+    voice = VoiceController(hass, store, manager)
+    hass.data[DOMAIN] = {
+        "store": store,
+        "manager": manager,
+        "voice": voice,
+        "challenges": {},
+    }
 
     await async_setup_http(hass)
     www = os.path.join(os.path.dirname(__file__), "www")
@@ -53,7 +78,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         webcomponent_name="pc-remote-panel",
         # Change the query version whenever the frontend module changes.  Home
         # Assistant keeps ES modules cached in an already-open browser tab.
-        module_url="/pc_remote/panel.js?v=1.1.2",
+        module_url="/pc_remote/panel.js?v=1.2.0",
         sidebar_title="PC Remote",
         sidebar_icon="mdi:desktop-classic",
         require_admin=True,
@@ -69,6 +94,29 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     async def cancel_timer(call: ServiceCall) -> None:
         await manager.execute(call.data.get("pc_id"), "CANCEL")
+
+    async def voice_command(call: ServiceCall) -> None:
+        await voice.async_command(
+            call.data.get("pc_id"),
+            call.data["command"],
+            call.data.get("source_entity_id", ""),
+            call.data.get("source_account", ""),
+        )
+
+    async def voice_confirm(call: ServiceCall) -> None:
+        await voice.async_confirm(
+            call.data.get("pc_id"),
+            call.data.get("source_entity_id", ""),
+            call.data.get("source_account", ""),
+            call.data.get("command"),
+        )
+
+    async def voice_cancel(call: ServiceCall) -> None:
+        await voice.async_cancel(
+            call.data.get("pc_id"),
+            call.data.get("source_entity_id", ""),
+            call.data.get("source_account", ""),
+        )
 
     hass.services.async_register(
         DOMAIN,
@@ -87,6 +135,24 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         "cancel_timer",
         cancel_timer,
         schema=SERVICE_PROFILE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "voice_command",
+        voice_command,
+        schema=SERVICE_VOICE_COMMAND_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "voice_confirm",
+        voice_confirm,
+        schema=SERVICE_VOICE_CONFIRM_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "voice_cancel",
+        voice_cancel,
+        schema=SERVICE_VOICE_CANCEL_SCHEMA,
     )
     return True
 

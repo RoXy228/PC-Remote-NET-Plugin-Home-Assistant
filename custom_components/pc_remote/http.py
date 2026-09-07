@@ -8,11 +8,12 @@ import uuid
 from urllib.parse import urlencode
 
 from aiohttp import web
-from homeassistant.components.http import HomeAssistantView
+from homeassistant.components.http import HomeAssistantView, require_admin
 
 from .const import DOMAIN, PAIRING_CHALLENGE_TTL
 from .manager import Manager
 from .models import Profile, SECRET_FIELDS, validate_callback_profile
+from .voice import VoiceConfigurationError, VoiceController, VoiceSetupRequired
 
 
 def _error(message: str, status: int = 400) -> web.Response:
@@ -40,6 +41,7 @@ class PCRemoteView(HomeAssistantView):
     def _data(request: web.Request) -> dict:
         return request.app["hass"].data[DOMAIN]
 
+    @require_admin
     async def get(self, request: web.Request, path: str = "", **kwargs) -> web.Response:
         data = self._data(request)
         store = data["store"]
@@ -62,37 +64,89 @@ class PCRemoteView(HomeAssistantView):
                     "includes_secrets": False,
                 }
             )
-        if path == "alice_yaml":
-            lines = [
-                "# Фразы для установленного Yandex.Station Intents",
-                "# Опасные действия подключите через сценарий с подтверждением.",
-            ]
-            for profile in store.profiles.values():
-                name = profile.display_name.strip() or "Компьютер"
-                lowered = name.lower()
-                lines.extend(
-                    (
-                        f"# {name}",
-                        f"- выключи {lowered}",
-                        f"- перезагрузи {lowered}",
-                        f"- заблокируй {lowered}",
-                        f"- выключи экран {lowered}",
-                        f"- включи {lowered}",
-                    )
-                )
-            return self.json({"yaml": "\n".join(lines) + "\n"})
+        if path == "voice":
+            try:
+                return self.json(await data["voice"].async_get_public_config())
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
+        if path == "voice/preview":
+            try:
+                return self.json(await data["voice"].async_preview())
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
+        if path == "voice/setup":
+            return self.json(await data["voice"].async_get_setup_state())
         return _error("Маршрут не найден", 404)
 
+    @require_admin
     async def post(self, request: web.Request, path: str = "", **kwargs) -> web.Response:
         hass = request.app["hass"]
         data = hass.data[DOMAIN]
         store = data["store"]
         manager: Manager = data["manager"]
+        voice: VoiceController = data["voice"]
         path = path.strip("/")
         try:
             body = await _json_body(request)
         except ValueError as exc:
             return _error(str(exc))
+
+        if path == "voice/settings":
+            if set(body) - {"profiles", "mode", "accounts"}:
+                return _error("voice/settings принимает только profiles, mode и accounts")
+            try:
+                return self.json(await voice.async_update_settings(body))
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
+
+        if path == "voice/preview":
+            if set(body) - {"profiles", "mode", "manual_yaml", "yaml", "accounts"}:
+                return _error(
+                    "voice/preview принимает только profiles, mode, manual_yaml и accounts"
+                )
+            if "yaml" in body:
+                if "manual_yaml" in body:
+                    return _error("Передайте только одно из полей yaml или manual_yaml")
+                # ``yaml`` is the concise public UI spelling; retain
+                # ``manual_yaml`` for programmatic clients of the GET shape.
+                body = {**body, "manual_yaml": body["yaml"]}
+                body.pop("yaml")
+            try:
+                return self.json(await voice.async_preview(body))
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
+
+        if path == "voice/manual":
+            if set(body) != {"yaml"}:
+                return _error("voice/manual принимает только поле yaml")
+            try:
+                return self.json(await voice.async_set_manual_yaml(body["yaml"]))
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
+
+        if path == "voice/setup":
+            if set(body) != {"confirm"}:
+                return _error("voice/setup требует только confirm=true")
+            try:
+                return self.json(await voice.async_setup_packages(body.get("confirm")))
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
+
+        if path == "voice/apply":
+            if set(body) - {"mode"}:
+                return _error("voice/apply принимает только необязательное поле mode")
+            try:
+                if body.get("mode") is not None:
+                    current = await voice.async_get_public_config()
+                    if body["mode"] != current["mode"]:
+                        return _error(
+                            "Сначала сохраните настройки выбранного режима перед применением"
+                        )
+                return self.json(await voice.async_apply())
+            except VoiceSetupRequired as exc:
+                return _error(str(exc), 409)
+            except VoiceConfigurationError as exc:
+                return _error(str(exc))
 
         if path == "challenge":
             now = time.time()
@@ -229,6 +283,7 @@ class PCRemoteView(HomeAssistantView):
 
         return _error("Маршрут не найден", 404)
 
+    @require_admin
     async def delete(self, request: web.Request, path: str = "", **kwargs) -> web.Response:
         data = self._data(request)
         path = path.strip("/")

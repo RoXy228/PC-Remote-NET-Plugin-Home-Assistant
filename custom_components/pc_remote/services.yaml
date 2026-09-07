@@ -36,3 +36,90 @@ cancel_timer:
       required: false
       selector:
         text:
+
+voice_command:
+  name: Голосовая команда ПК
+  description: >-
+    Выполнить безопасную команду PC Remote или запросить привязанное к Яндекс.Станции
+    подтверждение для выключения/перезагрузки. Для сценариев Алисы используйте
+    сгенерированный интеграцией YAML: он передаёт источник и аккаунт автоматически.
+  fields:
+    pc_id:
+      name: Компьютер
+      description: Идентификатор профиля; если не указан, используется основной компьютер.
+      required: false
+      selector:
+        text:
+    command:
+      name: Команда
+      description: WAKE, LOCK, SCREEN_OFF, STATUS, CANCEL, SHUTDOWN, REBOOT или команда с таймером 15/30/60/90/120 минут.
+      required: true
+      selector:
+        text:
+    source_entity_id:
+      name: Исходная Яндекс.Станция
+      description: Заполняется сгенерированным сценарием; требуется для выключения и перезагрузки.
+      required: false
+      selector:
+        entity:
+          domain: media_player
+    source_account:
+      name: Аккаунт Яндекса
+      description: Заполняется сгенерированным сценарием; требуется для выключения и перезагрузки.
+      required: false
+      selector:
+        text:
+
+voice_confirm:
+  name: Подтвердить голосовое действие ПК
+  description: >-
+    Подтверждает только ожидающее выключение/перезагрузку того же компьютера,
+    той же Яндекс.Станции и того же аккаунта в течение 15 секунд.
+  fields:
+    pc_id:
+      name: Компьютер
+      description: Идентификатор профиля; если не указан, используется основной компьютер.
+      required: false
+      selector:
+        text:
+    source_entity_id:
+      name: Исходная Яндекс.Станция
+      required: false
+      selector:
+        entity:
+          domain: media_player
+    source_account:
+      name: Аккаунт Яндекса
+      required: false
+      selector:
+        text:
+    command:
+      name: Ожидаемая команда
+      description: Необязательная дополнительная проверка для ручных автоматизаций.
+      required: false
+      selector:
+        text:
+
+voice_cancel:
+  name: Отменить голосовое подтверждение ПК
+  description: >-
+    Отменяет только ожидающее голосовое подтверждение того же компьютера,
+    той же Яндекс.Станции и того же аккаунта. Не отменяет уже запущенный таймер ПК.
+  fields:
+    pc_id:
+      name: Компьютер
+      description: Идентификатор профиля; если не указан, используется основной компьютер.
+      required: false
+      selector:
+        text:
+    source_entity_id:
+      name: Исходная Яндекс.Станция
+      required: false
+      selector:
+        entity:
+          domain: media_player
+    source_account:
+      name: Аккаунт Яндекса
+      required: false
+      selector:
+        text:

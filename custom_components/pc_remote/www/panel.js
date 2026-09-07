@@ -13,6 +13,8 @@ class PcRemotePanel extends HTMLElement {
     this._pairingTargetId = undefined;
     this._pairingTargetMarker = undefined;
     this._pairingExpiresAt = 0;
+    this._voice = undefined;
+    this._voiceMode = "managed";
     this._onClick = this._onClick.bind(this);
     this._onImportChange = this._onImportChange.bind(this);
   }
@@ -58,10 +60,10 @@ class PcRemotePanel extends HTMLElement {
       '.muted{color:var(--secondary-text-color)}.intro{max-width:820px;margin-bottom:20px;line-height:1.55}' +
       '.toolbar,.button-row,.timer-row,.profile-header,.fields-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.toolbar{margin-bottom:16px}.toolbar .spacer{flex:1 1 8px}' +
       'button{min-height:38px;border:0;border-radius:8px;padding:0 14px;color:var(--primary-text-color);background:var(--secondary-background-color);font:inherit;cursor:pointer}button:hover:not(:disabled){background:var(--divider-color)}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}button.primary{color:var(--text-primary-color,#fff);background:var(--primary-color)}button.danger{color:var(--text-primary-color,#fff);background:var(--error-color)}button.warning{color:var(--text-primary-color,#fff);background:var(--warning-color,#f4a000)}' +
-      '.notice{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;padding:12px 14px;border-radius:8px;border-left:4px solid var(--primary-color);background:var(--secondary-background-color);line-height:1.45}.notice[data-level="success"]{border-left-color:var(--success-color,#43a047)}.notice[data-level="error"]{border-left-color:var(--error-color)}.notice[data-level="warning"]{border-left-color:var(--warning-color,#f4a000)}.notice .pairing-link{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:7px;color:var(--text-primary-color,#fff);background:var(--primary-color);font-weight:500;text-decoration:none;white-space:nowrap}.notice .pairing-link:hover{filter:brightness(1.1)}.notice[hidden],.yaml-panel[hidden]{display:none}' +
-      '.windows-note{margin-bottom:16px;padding:12px 14px;border-radius:8px;background:var(--secondary-background-color);line-height:1.45}.profiles{display:grid;gap:16px}.profile-card,.empty-state,.yaml-panel{border-radius:12px;background:var(--card-background-color,var(--primary-background-color));box-shadow:var(--ha-card-box-shadow,0 2px 4px rgba(0,0,0,.18))}.profile-card{overflow:hidden}.profile-content{padding:18px}.profile-header{justify-content:space-between;gap:16px;margin-bottom:14px}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{border-radius:999px;padding:4px 9px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;white-space:nowrap}.badge.primary{color:var(--text-primary-color,#fff);background:var(--primary-color)}.badge.ok{color:var(--text-primary-color,#fff);background:var(--success-color,#43a047)}.badge.error{color:var(--text-primary-color,#fff);background:var(--error-color)}.profile-status{margin:0 0 14px;color:var(--secondary-text-color);font-size:14px;line-height:1.5}' +
-      'details{margin:16px 0;border-top:1px solid var(--divider-color);border-bottom:1px solid var(--divider-color)}summary{padding:14px 0;cursor:pointer;font-weight:500}.fields-grid{align-items:stretch;padding:0 0 16px}label.field{display:grid;flex:1 1 220px;gap:6px;color:var(--secondary-text-color);font-size:13px}label.field.checkbox-field{display:flex;align-items:center;gap:9px;padding-top:23px}input,select{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:6px;color:var(--primary-text-color);background:var(--primary-background-color);font:inherit}input[type="checkbox"]{width:auto;min-height:auto;accent-color:var(--primary-color)}input[readonly]{opacity:.75}.command-section{display:grid;gap:12px;margin-top:14px}.command-section+.command-section{padding-top:14px;border-top:1px solid var(--divider-color)}.timer-row select{width:auto;min-width:106px}.empty-state{padding:30px;text-align:center}.empty-state h2{margin-bottom:10px}.yaml-panel{margin-top:16px;padding:18px}.yaml-panel pre{overflow:auto;max-height:320px;margin:12px 0;padding:12px;border-radius:8px;background:var(--code-editor-background-color,var(--secondary-background-color));color:var(--primary-text-color);white-space:pre-wrap}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%)}' +
-      '@media(max-width:600px){main{padding:16px}.toolbar .spacer{display:none}.toolbar>button{flex:1 1 160px}.profile-header{align-items:flex-start;flex-direction:column}button{flex:1 1 auto}}' +
+      '.notice{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;padding:12px 14px;border-radius:8px;border-left:4px solid var(--primary-color);background:var(--secondary-background-color);line-height:1.45}.notice[data-level="success"]{border-left-color:var(--success-color,#43a047)}.notice[data-level="error"]{border-left-color:var(--error-color)}.notice[data-level="warning"]{border-left-color:var(--warning-color,#f4a000)}.notice .pairing-link{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:7px;color:var(--text-primary-color,#fff);background:var(--primary-color);font-weight:500;text-decoration:none;white-space:nowrap}.notice .pairing-link:hover{filter:brightness(1.1)}.notice[hidden],.voice-panel[hidden],.voice-accounts[hidden]{display:none}' +
+      '.windows-note{margin-bottom:16px;padding:12px 14px;border-radius:8px;background:var(--secondary-background-color);line-height:1.45}.profiles{display:grid;gap:16px}.profile-card,.empty-state,.voice-panel{border-radius:12px;background:var(--card-background-color,var(--primary-background-color));box-shadow:var(--ha-card-box-shadow,0 2px 4px rgba(0,0,0,.18))}.profile-card{overflow:hidden}.profile-content{padding:18px}.profile-header{justify-content:space-between;gap:16px;margin-bottom:14px}.badges{display:flex;flex-wrap:wrap;gap:8px}.badge{border-radius:999px;padding:4px 9px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;white-space:nowrap}.badge.primary{color:var(--text-primary-color,#fff);background:var(--primary-color)}.badge.ok{color:var(--text-primary-color,#fff);background:var(--success-color,#43a047)}.badge.error{color:var(--text-primary-color,#fff);background:var(--error-color)}.profile-status{margin:0 0 14px;color:var(--secondary-text-color);font-size:14px;line-height:1.5}' +
+      'details{margin:16px 0;border-top:1px solid var(--divider-color);border-bottom:1px solid var(--divider-color)}summary{padding:14px 0;cursor:pointer;font-weight:500}.fields-grid{align-items:stretch;padding:0 0 16px}label.field{display:grid;flex:1 1 220px;gap:6px;color:var(--secondary-text-color);font-size:13px}label.field.checkbox-field{display:flex;align-items:center;gap:9px;padding-top:23px}input,select,textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--divider-color);border-radius:6px;color:var(--primary-text-color);background:var(--primary-background-color);font:inherit}input[type="checkbox"],input[type="radio"]{width:auto;min-height:auto;accent-color:var(--primary-color)}input[readonly]{opacity:.75}.command-section{display:grid;gap:12px;margin-top:14px}.command-section+.command-section{padding-top:14px;border-top:1px solid var(--divider-color)}.timer-row select{width:auto;min-width:106px}.empty-state{padding:30px;text-align:center}.empty-state h2{margin-bottom:10px}.voice-panel{margin-top:16px;padding:18px}.voice-panel pre,.voice-panel textarea{overflow:auto;max-height:420px;margin:12px 0;padding:12px;border-radius:8px;background:var(--code-editor-background-color,var(--secondary-background-color));color:var(--primary-text-color);white-space:pre-wrap}.voice-panel textarea{display:block;min-height:280px;resize:vertical;white-space:pre;font-family:var(--code-font-family,monospace)}.voice-profile,.voice-accounts{padding:16px;border:1px solid var(--divider-color);border-radius:10px;margin:12px 0}.voice-account-list{display:grid;gap:8px}.voice-account-list label{display:flex;align-items:center;gap:9px}.voice-actions{display:grid;gap:10px;margin-top:12px}.voice-action{display:grid;grid-template-columns:minmax(150px,.75fr) minmax(170px,2fr);gap:10px;align-items:center}.voice-action label{display:flex;gap:8px;align-items:center}.setup-card{margin:12px 0;padding:14px;border:1px solid var(--warning-color,#f4a000);border-radius:8px}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;clip-path:inset(50%)}' +
+      '@media(max-width:600px){main{padding:16px}.toolbar .spacer{display:none}.toolbar>button{flex:1 1 160px}.profile-header{align-items:flex-start;flex-direction:column}.voice-action{grid-template-columns:1fr}button{flex:1 1 auto}}' +
       '</style>' +
       '<main>' +
       '<h1>PC Remote</h1>' +
@@ -69,7 +71,7 @@ class PcRemotePanel extends HTMLElement {
       '<div class="toolbar">' +
       '<button type="button" data-action="refresh">Обновить</button>' +
       '<button id="pair-button" class="primary" type="button" data-action="pair">Связать с этим ПК</button>' +
-      '<button type="button" data-action="show-yaml">Фразы для Алисы</button>' +
+      '<button type="button" data-action="show-voice">Алиса</button>' +
       '<span class="spacer"></span>' +
       '<button type="button" data-action="export">Экспорт</button>' +
       '<button type="button" data-action="export-secrets">Экспорт с ключами</button>' +
@@ -79,14 +81,49 @@ class PcRemotePanel extends HTMLElement {
       '<div id="windows-note" class="windows-note" hidden></div>' +
       '<div id="notice" class="notice" role="status" aria-live="polite" hidden></div>' +
       '<section id="profiles" class="profiles" aria-live="polite"></section>' +
-      '<section id="yaml-panel" class="yaml-panel" hidden>' +
-      '<div class="profile-header"><h2>Фразы для Алисы</h2><button type="button" data-action="hide-yaml">Закрыть</button></div>' +
-      '<p class="muted">Добавьте этот фрагмент в существующие сценарии Yandex.Station Intents. Выключение и перезагрузка должны оставаться с подтверждением в сценарии Home Assistant.</p>' +
-      '<pre id="yaml-output"></pre><div class="button-row"><button type="button" data-action="copy-yaml">Копировать</button></div>' +
+      '<section id="voice-panel" class="voice-panel profile-card" hidden>' +
+      '<div class="profile-content">' +
+      '<div class="profile-header"><h2>Алиса</h2><button type="button" data-action="hide-voice">Закрыть</button></div>' +
+      '<p class="muted">Настройте фразы здесь или вручную в YAML. PC Remote изменяет только свой YAML-файл, затем Yandex.Station Intents синхронизирует сценарии.</p>' +
+      '<div id="voice-setup" class="setup-card" hidden><strong>Нужна однократная подготовка Home Assistant.</strong><p id="voice-setup-text" class="muted"></p><button type="button" data-action="voice-setup" class="warning">Подготовить голосовую конфигурацию</button></div>' +
+      '<div id="voice-status" class="muted"></div>' +
+      '<section id="voice-accounts" class="voice-accounts" hidden><h3>Аккаунты Яндекса</h3><p class="muted">Выберите аккаунты, которым разрешены эти голосовые сценарии. Не выбранный аккаунт не сможет выполнить команду.</p><div id="voice-account-list" class="voice-account-list"></div></section>' +
+      '<div class="button-row" role="radiogroup" aria-label="Способ редактирования голосовых команд">' +
+      '<label class="field checkbox-field"><input type="radio" name="voice-mode" value="managed" checked> Настройка в панели</label>' +
+      '<label class="field checkbox-field"><input type="radio" name="voice-mode" value="manual"> Ручной YAML</label>' +
+      '</div>' +
+      '<div id="voice-managed"><div id="voice-profiles"></div></div>' +
+      '<div id="voice-manual" hidden><label class="field">YAML сценариев PC Remote<textarea id="voice-manual-yaml" spellcheck="false" aria-label="Ручной YAML для голосовых сценариев"></textarea></label><p class="muted">Укажите полный раздел <code>yandex_station_intents: intents:</code>. Этот файл относится только к PC Remote: не добавляйте токены, ключи или другие разделы Home Assistant.</p></div>' +
+      '<div class="button-row">' +
+      '<button type="button" data-action="voice-preview">Предпросмотр YAML</button>' +
+      '<button type="button" data-action="voice-copy">Копировать YAML</button>' +
+      '<button type="button" data-action="voice-save">Сохранить</button>' +
+      '<button type="button" data-action="voice-apply" class="primary">Применить и синхронизировать</button>' +
+      '</div>' +
+      '<pre id="voice-preview-output" hidden></pre>' +
+      '</div>' +
       '</section>' +
       '</main>';
 
     this._root.addEventListener("click", this._onClick);
+    this._root.addEventListener("change", (event) => {
+      const input = event.target;
+      if (input instanceof HTMLInputElement && input.name === "voice-mode") {
+        // Preserve an unsaved draft when the user switches between the
+        // graphical editor and the raw YAML editor.
+        if (this._voice) {
+          const draft = this._voicePayload();
+          if (draft.mode === "manual") {
+            this._voice.manual_yaml = draft.yaml;
+          } else {
+            this._voice.profiles = draft.profiles;
+          }
+          this._voice.accounts = draft.accounts;
+        }
+        this._voiceMode = input.value === "manual" ? "manual" : "managed";
+        this._renderVoice();
+      }
+    });
     this._root.querySelector("#import-file").addEventListener("change", this._onImportChange);
 
     if (!this._isWindows()) {
@@ -174,14 +211,26 @@ class PcRemotePanel extends HTMLElement {
           case "repair-profile":
             await this._repairProfile(button);
             break;
-          case "show-yaml":
-            await this._showYaml();
+          case "show-voice":
+            await this._showVoice();
             break;
-          case "hide-yaml":
-            this._root.querySelector("#yaml-panel").hidden = true;
+          case "hide-voice":
+            this._root.querySelector("#voice-panel").hidden = true;
             break;
-          case "copy-yaml":
-            await this._copyYaml();
+          case "voice-setup":
+            await this._setupVoice();
+            break;
+          case "voice-preview":
+            await this._previewVoice();
+            break;
+          case "voice-copy":
+            await this._copyVoiceYaml();
+            break;
+          case "voice-save":
+            await this._saveVoice(false);
+            break;
+          case "voice-apply":
+            await this._saveVoice(true);
             break;
           case "export":
             await this._exportProfiles(false);
@@ -748,38 +797,367 @@ class PcRemotePanel extends HTMLElement {
     }
   }
 
-  async _showYaml() {
-    const response = await this._api("GET", "pc_remote/alice_yaml");
-    if (!response || typeof response.yaml !== "string") {
-      throw new Error("Не удалось получить YAML-фрагмент.");
+  _voiceFromResponse(response) {
+    const voice = response && typeof response === "object" && response.voice
+      ? response.voice
+      : response;
+    if (!voice || typeof voice !== "object" || !Array.isArray(voice.profiles)) {
+      throw new Error("Home Assistant вернул некорректные настройки Алисы.");
     }
-    this._root.querySelector("#yaml-output").textContent = response.yaml;
-    this._root.querySelector("#yaml-panel").hidden = false;
+    return voice;
   }
 
-  async _copyYaml() {
-    const yaml = this._root.querySelector("#yaml-output").textContent || "";
-    if (!yaml) {
-      throw new Error("Сначала сформируйте фразы для Алисы.");
+  async _refreshVoice() {
+    this._voice = this._voiceFromResponse(await this._api("GET", "pc_remote/voice"));
+    this._voiceMode = this._voice.mode === "manual" ? "manual" : "managed";
+    this._renderVoice();
+  }
+
+  async _showVoice() {
+    this._root.querySelector("#voice-panel").hidden = false;
+    await this._refreshVoice();
+  }
+
+  _renderVoice() {
+    if (!this._voice) {
+      return;
+    }
+    const voice = this._voice;
+    const setup = voice.setup && typeof voice.setup === "object" ? voice.setup : {};
+    const setupBox = this._root.querySelector("#voice-setup");
+    const setupText = this._root.querySelector("#voice-setup-text");
+    const ready = setup.ready !== false;
+    setupBox.hidden = ready;
+    setupText.textContent = setup.message || (
+      "Кнопка добавит подключение Home Assistant packages, создаст резервную " +
+      "копию configuration.yaml и не будет менять существующие сценарии."
+    );
+
+    const status = this._root.querySelector("#voice-status");
+    status.textContent = voice.status || voice.last_message || (
+      ready
+        ? "Изменения применяются через Yandex.Station Intents."
+        : "Сначала подготовьте голосовую конфигурацию."
+    );
+
+    this._root.querySelectorAll('input[name="voice-mode"]').forEach((input) => {
+      input.checked = input.value === this._voiceMode;
+    });
+    this._root.querySelector("#voice-managed").hidden = this._voiceMode !== "managed";
+    this._root.querySelector("#voice-manual").hidden = this._voiceMode !== "manual";
+
+    this._renderVoiceAccounts(voice);
+
+    const profiles = this._root.querySelector("#voice-profiles");
+    profiles.replaceChildren();
+    for (const profile of voice.profiles) {
+      profiles.append(this._createVoiceProfile(profile));
+    }
+    if (!voice.profiles.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "Сначала привяжите хотя бы один компьютер в основной части панели.";
+      profiles.append(empty);
     }
 
-    if (navigator.clipboard?.writeText && window.isSecureContext) {
-      await navigator.clipboard.writeText(yaml);
+    const manual = this._root.querySelector("#voice-manual-yaml");
+    manual.value = typeof voice.manual_yaml === "string" ? voice.manual_yaml : "";
+    const preview = this._root.querySelector("#voice-preview-output");
+    if (typeof voice.preview_yaml === "string" && voice.preview_yaml) {
+      preview.textContent = voice.preview_yaml;
+      preview.hidden = false;
     } else {
-      const helper = document.createElement("textarea");
-      helper.value = yaml;
-      helper.setAttribute("readonly", "");
-      helper.style.position = "fixed";
-      helper.style.opacity = "0";
-      this._root.append(helper);
-      helper.select();
-      const copied = document.execCommand("copy");
-      helper.remove();
-      if (!copied) {
-        throw new Error("Не удалось скопировать текст. Выделите его вручную.");
-      }
+      preview.textContent = "";
+      preview.hidden = true;
     }
-    this._setNotice("YAML-фрагмент скопирован в буфер обмена.", "success");
+  }
+
+  _renderVoiceAccounts(voice) {
+    const container = this._root.querySelector("#voice-accounts");
+    const list = this._root.querySelector("#voice-account-list");
+    const available = Array.isArray(voice.available_accounts) ? voice.available_accounts : [];
+    const selected = new Set(
+      Array.isArray(voice.accounts) ? voice.accounts.map((value) => String(value)) : []
+    );
+    container.hidden = false;
+    list.replaceChildren();
+
+    if (!available.length) {
+      const warning = document.createElement("p");
+      warning.className = "muted";
+      warning.textContent = "Не найден настроенный аккаунт Yandex.Station Intents. Добавьте и включите его, затем обновите эту страницу.";
+      list.append(warning);
+      return;
+    }
+
+    for (const account of available) {
+      if (!account || typeof account !== "object" || !account.id) {
+        continue;
+      }
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.dataset.voiceAccount = String(account.id);
+      checkbox.checked = selected.has(String(account.id));
+      const title = document.createElement("span");
+      title.textContent = String(account.title || "Аккаунт Яндекса");
+      label.append(checkbox, title);
+      list.append(label);
+    }
+  }
+
+  _createVoiceProfile(profile) {
+    const card = document.createElement("section");
+    card.className = "voice-profile";
+    card.dataset.voiceProfileId = String(profile.id);
+
+    const title = document.createElement("h3");
+    title.textContent = profile.display_name || "Компьютер";
+    const description = document.createElement("p");
+    description.className = "muted";
+    description.textContent = "Алиса будет использовать это имя и выбранные фразы только для данного компьютера.";
+    card.append(title, description);
+
+    const fields = document.createElement("div");
+    fields.className = "fields-grid";
+    fields.append(
+      this._textField(
+        "Имя для Алисы",
+        "voice_alias",
+        profile.alias || profile.display_name || "Компьютер",
+        "например, основной компьютер",
+        false
+      ),
+      this._checkboxField(
+        "Включить голосовое управление этим компьютером",
+        "voice_enabled",
+        profile.enabled !== false
+      )
+    );
+    card.append(fields);
+
+    const actions = document.createElement("div");
+    actions.className = "voice-actions";
+    const actionValues = profile.actions && typeof profile.actions === "object"
+      ? profile.actions
+      : {};
+    for (const [key, rawAction] of Object.entries(actionValues)) {
+      const action = rawAction && typeof rawAction === "object"
+        ? rawAction
+        : { enabled: Boolean(rawAction), phrases: [] };
+      actions.append(this._createVoiceAction(key, action));
+    }
+    if (!Object.keys(actionValues).length) {
+      const text = document.createElement("p");
+      text.className = "muted";
+      text.textContent = "Для этого профиля пока нет доступных голосовых команд.";
+      actions.append(text);
+    }
+    card.append(actions);
+    return card;
+  }
+
+  _createVoiceAction(key, action) {
+    const row = document.createElement("div");
+    row.className = "voice-action";
+    row.dataset.voiceAction = key;
+
+    const enabled = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.voiceActionEnabled = key;
+    checkbox.checked = action.enabled !== false;
+    checkbox.disabled = Boolean(action.unavailable_reason);
+    const label = document.createElement("span");
+    label.textContent = action.label || this._voiceActionLabel(key);
+    enabled.append(checkbox, label);
+
+    const phrases = document.createElement("textarea");
+    phrases.dataset.voiceActionPhrases = key;
+    phrases.rows = 2;
+    phrases.placeholder = "Одна фраза на строку";
+    phrases.setAttribute("aria-label", "Фразы для действия " + label.textContent);
+    phrases.value = Array.isArray(action.phrases) ? action.phrases.join("\n") : "";
+    phrases.disabled = Boolean(action.unavailable_reason);
+    row.append(enabled, phrases);
+    if (action.unavailable_reason) {
+      const reason = document.createElement("small");
+      reason.className = "muted";
+      reason.textContent = String(action.unavailable_reason);
+      row.append(reason);
+    }
+    return row;
+  }
+
+  _voiceActionLabel(key) {
+    const definitions = this._voice?.action_definitions || {};
+    const definition = definitions[key];
+    if (definition && typeof definition === "object" && definition.label) {
+      return String(definition.label);
+    }
+    const labels = {
+      wake: "Включить (WOL)",
+      status: "Проверить связь",
+      lock: "Заблокировать",
+      screen_off: "Выключить экран",
+      cancel: "Отменить таймер",
+      shutdown: "Выключить",
+      reboot: "Перезагрузить",
+      confirm_shutdown: "Подтвердить выключение",
+      cancel_shutdown: "Отменить выключение",
+      confirm_reboot: "Подтвердить перезагрузку",
+      cancel_reboot: "Отменить перезагрузку",
+    };
+    if (labels[key]) {
+      return labels[key];
+    }
+    const timer = /^(shutdown|reboot)_(15|30|60|90|120)$/.exec(key);
+    if (timer) {
+      return (timer[1] === "shutdown" ? "Выключить" : "Перезагрузить") + " через " + timer[2] + " минут";
+    }
+    return String(key).replaceAll("_", " ");
+  }
+
+  _voicePayload() {
+    const accounts = [];
+    this._root.querySelectorAll("[data-voice-account]").forEach((checkbox) => {
+      if (checkbox.checked) {
+        accounts.push(String(checkbox.dataset.voiceAccount || ""));
+      }
+    });
+    if (this._voiceMode === "manual") {
+      return {
+        mode: "manual",
+        yaml: this._root.querySelector("#voice-manual-yaml").value,
+        accounts,
+      };
+    }
+
+    const profiles = [];
+    this._root.querySelectorAll(".voice-profile").forEach((card) => {
+      const id = String(card.dataset.voiceProfileId || "");
+      if (!id) {
+        return;
+      }
+      const aliasInput = card.querySelector('[data-field="voice_alias"]');
+      const enabledInput = card.querySelector('[data-field="voice_enabled"]');
+      const actions = {};
+      card.querySelectorAll(".voice-action").forEach((row) => {
+        const key = String(row.dataset.voiceAction || "");
+        if (!key) {
+          return;
+        }
+        const enabled = row.querySelector('[data-voice-action-enabled]');
+        const phrases = row.querySelector('[data-voice-action-phrases]');
+        actions[key] = {
+          enabled: Boolean(enabled?.checked),
+          phrases: String(phrases?.value || "")
+            .split(/\r?\n/)
+            .map((phrase) => phrase.trim())
+            .filter(Boolean),
+        };
+      });
+      profiles.push({
+        id,
+        alias: String(aliasInput?.value || "").trim(),
+        enabled: Boolean(enabledInput?.checked),
+        actions,
+      });
+    });
+    return { mode: "managed", profiles, accounts };
+  }
+
+  async _setupVoice() {
+    const accepted = window.confirm(
+      "Подготовить голосовую конфигурацию? В configuration.yaml будет добавлено " +
+      "подключение packages, а перед изменением создастся локальная резервная копия. " +
+      "Существующие сценарии останутся без изменений."
+    );
+    if (!accepted) {
+      return;
+    }
+    await this._api("POST", "pc_remote/voice/setup", { confirm: true });
+    await this._refreshVoice();
+    this._setNotice("Голосовая конфигурация подготовлена. Настройте фразы и нажмите «Применить и синхронизировать».", "success");
+  }
+
+  async _previewVoice() {
+    const response = await this._api("POST", "pc_remote/voice/preview", this._voicePayload());
+    if (!response || typeof response.yaml !== "string") {
+      throw new Error("Home Assistant не вернул YAML-предпросмотр.");
+    }
+    const output = this._root.querySelector("#voice-preview-output");
+    output.textContent = response.yaml;
+    output.hidden = false;
+  }
+
+  async _saveVoice(apply) {
+    const payload = this._voicePayload();
+    if (payload.mode === "manual") {
+      await this._api("POST", "pc_remote/voice/settings", {
+        mode: "manual",
+        accounts: payload.accounts,
+      });
+      await this._api("POST", "pc_remote/voice/manual", { yaml: payload.yaml });
+    } else {
+      await this._api("POST", "pc_remote/voice/settings", payload);
+    }
+
+    if (apply) {
+      const accepted = window.confirm(
+        "Сохранить YAML PC Remote и синхронизировать голосовые сценарии с Яндексом?"
+      );
+      if (!accepted) {
+        await this._refreshVoice();
+        this._setNotice("Настройки сохранены, но сценарии в Яндексе пока не синхронизированы.", "success");
+        return;
+      }
+      const applied = await this._api("POST", "pc_remote/voice/apply", { mode: payload.mode });
+      if (!applied || applied.ok !== true) {
+        throw new Error(
+          (applied && (applied.message || applied.error)) ||
+          "Yandex.Station Intents не смог применить голосовые сценарии."
+        );
+      }
+      this._setNotice(applied.message || "Голосовые сценарии применены и отправлены на синхронизацию.", "success");
+    } else {
+      this._setNotice("Настройки Алисы сохранены.", "success");
+    }
+    await this._refreshVoice();
+  }
+
+  async _copyVoiceYaml() {
+    const output = this._root.querySelector("#voice-preview-output");
+    // Do not copy an earlier preview after the user has edited a phrase.
+    // Render from the form that is visible right now every time.
+    const response = await this._api("POST", "pc_remote/voice/preview", this._voicePayload());
+    const yaml = typeof response?.yaml === "string" ? response.yaml : "";
+    output.textContent = yaml;
+    output.hidden = !yaml;
+    if (!yaml) {
+      throw new Error("Не удалось получить YAML для копирования.");
+    }
+    await this._copyText(yaml);
+    this._setNotice("YAML голосовых сценариев скопирован в буфер обмена.", "success");
+  }
+
+  async _copyText(value) {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const helper = document.createElement("textarea");
+    helper.value = value;
+    helper.setAttribute("readonly", "");
+    helper.style.position = "fixed";
+    helper.style.opacity = "0";
+    this._root.append(helper);
+    helper.select();
+    const copied = document.execCommand("copy");
+    helper.remove();
+    if (!copied) {
+      throw new Error("Не удалось скопировать текст. Выделите его вручную.");
+    }
   }
 
   async _exportProfiles(includeSecrets) {
